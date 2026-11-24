@@ -17,7 +17,7 @@ init()
 # --- ISTO FAZ O BOTÃO INSTALAR FUNCIONAR ---
 @app.route("/manifest.json")
 def manifest():
-    return jsonify({"name":"Troca Troca Moz","short_name":"TrocaTroca","start_url":"/","display":"standalone","background_color":"#00A651","theme_color":"#00A651","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/3082/3082383.png","sizes":"512x512","type":"image/png"}]})
+    return jsonify({"name":"Troca Troca Moz","short_name":troca troca," "icons":[{"src":"/IMG-20261124-WA-0032.jpg","sizes":"512x512","type":"image/jpeg"}],":"standalone","background_color":"#00A651","theme_color":"#00A651","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/3082/3082383.png","sizes":"512x512","type":"image/png"}]})
 @app.route("/sw.js")
 def sw():
     return "self.addEventListener('fetch',e=>{})", 200, {'Content-Type':'application/javascript'}
