@@ -46,7 +46,7 @@ button.pub{background:#00a651;color:white;border:none;padding:12px;border-radius
 .box{background:white;padding:14px;margin:10px;border-radius:10px}
 </style></head><body>
 <br><a style="background:yellow;color:black;padding:10px 20px;border-radius:20px;font-weight:bold;display:inline-block;margin-top:8px;text-decoration:none" href="/publicar">➕ ADICIONAR TROCA</a>
-<div class="menu"><a href="/">🏠 Início</a><a href="/login">👤 Entrar</a><a href="/register">✅ Criar Conta</a><a href="/logout">Sair</a></div>
+<a style="background:yellow;color:black;padding:10px 20px;border-radius:20px;font-weight:bold;display:inline-block;margin-top:8px" href="/publicar">➕ ADICIONAR TROCA</a>
 {%USER%}
 </body></html>
 """
