@@ -45,7 +45,7 @@ input,textarea,select{width:100%;padding:10px;margin:6px 0;border:1px solid #ddd
 button.pub{background:#00a651;color:white;border:none;padding:12px;border-radius:8px;width:100%;font-weight:bold}
 .box{background:white;padding:14px;margin:10px;border-radius:10px}
 </style></head><body>
-<div class="top"><b>🔄 TROCA TROCA MOZ</b><br><small>Troca sem dinheiro - Todos veem tudo</small><br><a class="btn" href="/publicar">+ PUBLICAR COM FOTO</a></div>
+<br><a style="background:yellow;color:black;padding:10px 20px;border-radius:20px;font-weight:bold;display:inline-block;margin-top:8px;text-decoration:none" href="/publicar">➕ ADICIONAR TROCA</a>
 <div class="menu"><a href="/">🏠 Início</a><a href="/login">👤 Entrar</a><a href="/register">✅ Criar Conta</a><a href="/logout">Sair</a></div>
 {%USER%}
 </body></html>
