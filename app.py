@@ -76,7 +76,7 @@ def home():
     html=f"{ola}<h3 style='padding:0 10px'>🔥 Todas as Trocas</h3><div class='grid'>{cards}</div>"
     if not cards:
         html+="<div class='box'>Ainda não há trocas. Sê o primeiro! 👆</div>"
-    return BASE.replace"{CONTEUDO}", html).replace("{SAIR}", sair)
+    return BASE.replace("{CONTEUDO}", html).replace("{SAIR}", sair)
 
 @app.route("/produto/<int:pid>")
 def produto(pid):
