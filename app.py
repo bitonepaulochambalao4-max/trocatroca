@@ -48,7 +48,7 @@ input,textarea{width:100%;padding:12px;margin:7px 0;border:1px solid #ddd;border
 .galeria img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:12px;margin-bottom:8px}
 </style></head><body>
 <div class="header"><h1>🔄 TROCA TROCA MOZ</h1><p>Troca sem dinheiro • Matola - Maputo</p><a class="btn-add" href="/publicar">➕ ADICIONAR TROCA</a></div>
-<div class="nav"><a href="/">🏠 Início</a><a href="/publicar">➕ Publicar</a><a href="/login">👤 Entrar</a><a href="/register">✅ Criar Conta</a></div>
+<div class="nav"><a href="/">🏠 Início</a><a href="/publicar">➕ Publicar</a><a href="/login">🔑 Entrar</a><a href="/register">✅ Criar Conta</a></div>
 {CONTEUDO}
 </body></html>
 """
