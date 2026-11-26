@@ -5,6 +5,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.secret_key = "troca-troca-moz-2026"
+ADMIN_SENHA = "1234"
 UPLOAD = "static/uploads"
 os.makedirs(UPLOAD, exist_ok=True)
 
