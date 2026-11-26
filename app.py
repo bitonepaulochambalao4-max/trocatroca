@@ -76,7 +76,7 @@ def home():
     html=f"{ola}<h3 style='padding:0 10px'>🔥 Todas as Trocas</h3><div class='grid'>{cards}</div>"
     if not cards:
         html+="<div class='box'>Ainda não há trocas. Sê o primeiro! 👆</div>"
-    return BASE.replace("{%CONTEUDO%}", html).replace("{%SAIR%}", sair)
+    return BASE.replace"{CONTEUDO}", html).replace("{SAIR}", sair)
 
 @app.route("/produto/<int:pid>")
 def produto(pid):
@@ -86,7 +86,7 @@ def produto(pid):
     imgs="".join([f'<a href="/static/uploads/{f}"><img src="/static/uploads/{f}"></a>' for f in fotos])
     sair='<a href="/logout">🚪 Sair</a>' if "user_id" in session else ''
     html=f"""<div class="box"><div class="galeria">{imgs}</div><h3>{p['tenho']}</h3><p><b>QUERO:</b> {p['quero']}</p><p>{p['desc']}</p><p><b>Preço:</b> {p['preco']} | <b>Cidade:</b> {p['cidade']}</p><a class="wpp" href="https://wa.me/{p['whatsapp']}">💬 FALAR NO WHATSAPP</a><br><br><a href="/">← Voltar</a></div>"""
-    return BASE.replace("{%CONTEUDO%}", html).replace("{%SAIR%}", sair)
+    return BASE.replace("{CONTEUDO}", html).replace("{SAIR}", sair)
 
 @app.route("/like/<int:pid>", methods=["POST"])
 def like(pid):
