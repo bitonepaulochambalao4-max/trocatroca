@@ -147,6 +147,50 @@ def login():
 @app.route("/logout")
 def logout():
     session.clear(); return redirect("/")
+    
+# --- ADMIN ---
+ADMIN_SENHA = "troca2026"
 
-if __name__=="__main__":
-    app.run(host="0.0.0.0", port=5000)
+def admin_ok():
+    return session.get("admin") == True
+
+@app.route("/admin", methods=["GET", "POST"])
+def admin():
+    if request.method == "POST":
+        if request.form.get("senha") == ADMIN_SENHA:
+            session["admin"] = True
+            return redirect("/admin")
+        return "Senha errada! <a href='/admin'>Voltar</a>"
+    if not admin_ok():
+        html = """<div class="box"><h3>Admin TrocaTroca</h3>
+        <form method="post"><input name="senha" type="password" placeholder="Senha" required>
+        <button>ENTRAR</button></form></div>"""
+        return BASE.replace("{CONTEUDO}", html).replace("{SAIR}", "")
+    con = db()
+    users = con.execute("SELECT * FROM users ORDER BY id DESC").fetchall()
+    prods = con.execute("SELECT * FROM products ORDER BY id DESC").fetchall()
+    con.close()
+    h = "<div class='box'><h3>Painel Admin</h3><p>Users: %s | Produtos: %s</p>" % (len(users), len(prods))
+    h += "<h4>Utilizadores</h4>"
+    for u in users:
+        h += f"<p>{u[0]} - {u[1]} - {u[2]} <a href='/admin/del_user/{u[0]}'>Apagar</a></p>"
+    h += "<h4>Produtos</h4>"
+    for p in prods:
+        h += f"<p>{p[0]} - {p[2]} - {p[4]} MT <a href='/admin/del_prod/{p[0]}'>Apagar</a></p>"
+    h += "<br><a href='/logout'>Sair</a></div>"
+    return BASE.replace("{CONTEUDO}", h).replace("{SAIR}", "")
+
+@app.route("/admin/del_user/<int:uid>")
+def del_user(uid):
+    if not admin_ok(): return redirect("/admin")
+    con = db(); con.execute("DELETE FROM users WHERE id=?", (uid,)); con.commit(); con.close()
+    return redirect("/admin")
+
+@app.route("/admin/del_prod/<int:pid>")
+def del_prod(pid):
+    if not admin_ok(): return redirect("/admin")
+    con = db(); con.execute("DELETE FROM products WHERE id=?", (pid,)); con.commit(); con.close()
+    return redirect("/admin")
+
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=5000)
