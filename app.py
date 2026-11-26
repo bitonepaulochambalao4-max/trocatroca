@@ -134,7 +134,7 @@ def register():
         except: pass
         con.close(); return redirect("/login")
     html="""<div class="box"><h3>✅ Criar Conta</h3><form method="post"><input name="nome" placeholder="Teu Nome" required><input name="email" placeholder="Email" required><input name="senha" type="password" placeholder="Cria uma Senha" required><button class="pub">CRIAR CONTA</button></form><p style="text-align:center">Já tens conta? <a href="/login">Entrar</a></p></div>"""
-    return BASE.replace("{%CONTEUDO%}", html).replace("{%SAIR%}", "")
+    return BASE.replace("{CONTEUDO}", html).replace("(CONTEUDO)", html).replace("{SAIR}", "")
 
 @app.route("/login", methods=["GET","POST"])
 def login():
