@@ -148,8 +148,6 @@ def login():
 def logout():
     session.clear(); return redirect("/")
     
-# --- ADMIN ---
-ADMIN_SENHA = "troca2026"
 
 def admin_ok():
     return session.get("admin") == True
