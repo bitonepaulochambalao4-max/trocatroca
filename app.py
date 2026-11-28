@@ -28,37 +28,37 @@ def get_user():
 
 CSS = """
 <style>
-*{box-sizing:border-box} body{margin:0;font-family:Arial;background:#f0f2f5;color:#222}
-.top{background:#00a651;color:white;padding:18px 12px;text-align:center}
+*{box-sizing:border-box} body{margin:0;font-family:Arial;background:white;color:#222}
+.top{background:#00a651;color:white;padding:18px 10px;text-align:center;width:100%}
 .top h1{margin:0;font-size:26px}
-.top p{margin:6px 0 0;font-size:13px;opacity:.95}
-.wrap{padding:12px;padding-bottom:30px;max-width:600px;margin:0 auto}
-.box{background:white;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.07)}
-input,textarea{width:100%;padding:13px;margin:7px 0;border:1px solid #ddd;border-radius:10px;font-size:15px}
+.top p{margin:6px 0 0;font-size:13px}
+.wrap{padding:0;width:100%;margin:0}
+.box{background:white;padding:16px;margin:0;border-bottom:8px solid #f0f2f5;width:100%}
+input,textarea{width:100%;padding:14px;margin:7px 0;border:1px solid #ddd;border-radius:10px;font-size:15px}
 textarea{min-height:100px}
 label{font-weight:bold;font-size:14px}
-.btn{background:#00a651;color:white;border:none;padding:14px;border-radius:10px;width:100%;font-size:16px;font-weight:bold;cursor:pointer}
+.btn{background:#00a651;color:white;border:none;padding:15px;border-radius:10px;width:100%;font-size:17px;font-weight:bold;cursor:pointer}
 .btn-yellow{background:#ffcc00;color:#111}
 .btn-whats{background:#25D366}
 .btn-dark{background:#111}
-.trade{border-radius:14px;overflow:hidden;background:white;box-shadow:0 2px 10px rgba(0,0,0,.07);margin-bottom:14px}
-.trade img.main{width:100%;height:240px;object-fit:cover;background:#eee}
+.trade{background:white;width:100%;border-bottom:8px solid #f0f2f5}
+.trade img.main{width:100%;height:320px;object-fit:cover;background:#eee}
 .thumbs{display:flex;gap:6px;padding:8px}
-.thumbs img{width:68px;height:68px;border-radius:8px;object-fit:cover;cursor:pointer;border:2px solid #eee}
+.thumbs img{width:72px;height:72px;border-radius:8px;object-fit:cover;cursor:pointer;border:2px solid #eee}
 .badge{background:#e8f5e9;color:#00a651;padding:5px 10px;border-radius:20px;font-size:12px;font-weight:bold}
-.stat-big{background:#00a651;color:white;border-radius:14px;padding:20px;text-align:center;margin-bottom:12px}
+.stat-big{background:#00a651;color:white;padding:20px;text-align:center;width:100%}
 .stat-big b{font-size:36px;display:block}
-.stat-row{display:flex;gap:10px}
-.stat-row .box{flex:1;text-align:center}
+.stat-row{display:flex;gap:0;width:100%}
+.stat-row .box{flex:1;text-align:center;border-bottom:8px solid #f0f2f5}
 .stat-row b{font-size:26px;display:block;color:#00a651}
 a{color:#00a651;text-decoration:none;font-weight:bold}
 small{color:#777}
+h3{padding:0 14px}
 </style>
 """
 
 HEADER = """<div class="top"><h1>🔄 TROCA TROCA</h1><p>Troque sem gastar dinheiro • Moçambique 🇲🇿</p></div>"""
 
-# ========== PÁGINA PRINCIPAL - LIMPA, SEM NÚMEROS ==========
 @app.route("/")
 def home():
     d = load()
@@ -88,7 +88,7 @@ def home():
           <div class="thumbs">{thumbs}</div>
           <div style="padding:0 14px 14px">
             <span class="badge">✅ Disponível</span>
-            <h3 style="margin:8px 0">{t.get('title','')}</h3>
+            <h3 style="margin:8px 0;padding:0">{t.get('title','')}</h3>
             <p style="color:#555;white-space:pre-line;line-height:1.5">{t.get('desc','')}</p>
             <p><b style="font-size:18px;color:#00a651">💰 {t.get('price','')} MZN</b></p>
             <p><b>🔄 Quer em troca:</b> {t.get('want','')}</p>
@@ -157,19 +157,18 @@ def add():
     <label>Título do Produto *</label><input name="title" placeholder="Ex: LCD S26 - Microfone Bluetooth" required>
     <label>Preço (MZN) *</label><input name="price" type="number" placeholder="1500" required>
     <label>📝 Descrição do Produto *</label>
-    <textarea name="desc" placeholder="Ex: Novo na caixa, Bluetooth 6.0, ecrã digital, microfone com cancelamento de ruído, bateria longa..." required></textarea>
+    <textarea name="desc" placeholder="Ex: Novo na caixa, Bluetooth 6.0, ecrã digital, microfone com cancelamento de ruído..." required></textarea>
     <label>🔄 O que queres em troca?</label><input name="want" placeholder="Ex: Troco por telefone Samsung ou vendo">
     <label>📍 Localização</label><input name="location" value="Matola - Maputo">
     <label>📱 Teu WhatsApp (ex: 840000000)</label><input name="whatsapp" placeholder="840000000">
     <label>📸 Fotos - Escolhe até 4 fotos da tua galeria</label>
     <input type="file" name="photos" accept="image/*" multiple>
-    <small>A primeira foto vai ser a principal. Clica nas outras para ver maior.</small><br><br>
+    <small>A primeira foto vai ser a principal.</small><br><br>
     <label>Ou cola links de fotos (opcional)</label>
     <input name="link1" placeholder="Link Foto 1"><input name="link2" placeholder="Link Foto 2">
     <input name="link3" placeholder="Link Foto 3"><input name="link4" placeholder="Link Foto 4">
     <button class="btn">✅ PUBLICAR TROCA</button></form></div></div>"""
 
-# ========== PÁGINA ADMIN - DIFERENTE, COM TODOS OS NÚMEROS ==========
 @app.route("/admin", methods=["GET","POST"])
 def admin():
     if request.method == "POST":
@@ -187,8 +186,8 @@ def admin():
     <div class="wrap">
       <div class="stat-big"><span>👥 PESSOAS QUE VISITARAM O SITE</span><b>""" + str(d['visits']) + """</b><span>visitas totais</span></div>
       <div class="stat-row">
-        <div class="box"><b>""" + str(len(d['trades'])) + """</b><span>📦 Produtos / Trocas</span></div>
-        <div class="box"><b>""" + str(len(d['users'])) + """</b><span>👤 Pessoas Registadas</span></div>
+        <div class="box"><b>""" + str(len(d['trades'])) + """</b><span>📦 Produtos</span></div>
+        <div class="box"><b>""" + str(len(d['users'])) + """</b><span>👤 Pessoas</span></div>
       </div>
       <div class="box"><h3>👤 Pessoas Registadas</h3>""" + users_list + """</div>
       <div class="box"><h3>📦 Todos os Produtos</h3>""" + trades_list + """</div>
