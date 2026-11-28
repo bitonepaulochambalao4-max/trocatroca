@@ -1,5 +1,5 @@
 import os, json, base64
-from flask import Flask, request, redirect, session
+from flask import Flask, request, redirect, session, Response
 app = Flask(__name__)
 app.secret_key = "trocatroca-123"
 DB = "data.json"
@@ -22,6 +22,64 @@ def get_user():
     for u in d["users"]:
         if u["email"] == session["email"]: return u
     return None
+
+# --- PWA - APP VERDADEIRO ---
+PWA_HEAD = """
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#00a651">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Troca Troca">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="icon" href="/icon-192.png">
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/sw.js');
+  });
+}
+</script>
+"""
+
+@app.route("/manifest.json")
+def manifest():
+    m = {
+      "name": "Troca Troca",
+      "short_name": "Troca Troca",
+      "description": "Troque sem gastar dinheiro - Mocambique",
+      "start_url": "/",
+      "display": "standalone",
+      "background_color": "#00a651",
+      "theme_color": "#00a651",
+      "orientation": "portrait",
+      "icons": [
+        {"src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+        {"src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"}
+      ]
+    }
+    return Response(json.dumps(m), mimetype="application/json")
+
+@app.route("/sw.js")
+def sw():
+    js = """
+self.addEventListener('install', e => { self.skipWaiting(); });
+self.addEventListener('activate', e => { self.clients.claim(); });
+self.addEventListener('fetch', e => { e.respondWith(fetch(e.request).catch(()=> caches.match(e.request))); });
+"""
+    return Response(js, mimetype="application/javascript")
+
+# Icone SVG verde - funciona como PNG
+ICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512"><rect width="512" height="512" rx="100" fill="#00a651"/><text x="256" y="300" font-size="220" text-anchor="middle" fill="white">🔄</text><text x="256" y="420" font-size="48" font-weight="bold" text-anchor="middle" fill="white" font-family="Arial">TROCA TROCA</text></svg>"""
+@app.route("/icon-192.png")
+def icon192():
+    return Response(ICON_SVG, mimetype="image/svg+xml")
+@app.route("/icon-512.png")
+def icon512():
+    return Response(ICON_SVG, mimetype="image/svg+xml")
+# --- FIM PWA ---
+
 CSS = """
 <style>
 *{box-sizing:border-box} body{margin:0;font-family:Arial;background:#f5f5f5;color:#222}
@@ -64,7 +122,7 @@ def home():
     user = get_user()
     trades = list(reversed(d["trades"]))
     q = (request.args.get("q") or "").lower()
-    h = CSS + HEADER + '<div class="wrap">'
+    h = PWA_HEAD + CSS + HEADER + '<div class="wrap">'
     if user:
         h += f"""<div class="box">Olá, <b>{user['name']}</b> 👋<br><br>
         <a href="/add"><button class="btn btn-yellow">+ ADICIONAR TROCA</button></a><br><br>
@@ -105,7 +163,7 @@ def detail(tid):
     photos = t.get("photos", [])
     main = photos[0] if photos else ""
     thumbs = "".join([f'<img src="{p}" onclick="document.getElementById(\'md\').src=this.src" style="width:70px;height:70px;object-fit:cover;border-radius:8px">' for p in photos])
-    return CSS + HEADER + f"""<div class="wrap"><div class="box" style="margin:0">
+    return PWA_HEAD + CSS + HEADER + f"""<div class="wrap"><div class="box" style="margin:0">
     <img id="md" src="{main}" style="width:100%;height:auto;display:block;border-radius:12px">
     <div style="display:flex;gap:6px;margin-top:8px">{thumbs}</div>
     <h2>{t.get('title','')}</h2>
@@ -121,7 +179,7 @@ def register():
         d = load()
         d["users"].append({"name": request.form["name"], "email": request.form["email"], "password": request.form["password"]})
         save(d); session["email"] = request.form["email"]; return redirect("/")
-    return CSS + HEADER + """<div class="wrap"><div class="box"><h2>Criar Conta</h2><form method="post">
+    return PWA_HEAD + CSS + HEADER + """<div class="wrap"><div class="box"><h2>Criar Conta</h2><form method="post">
     <input name="name" placeholder="Teu nome" required><input name="email" placeholder="Email" required>
     <input name="password" type="password" placeholder="Senha" required><button class="btn">CRIAR CONTA</button></form></div></div>"""
 @app.route("/login", methods=["GET","POST"])
@@ -132,7 +190,7 @@ def login():
             if u["email"] == request.form["email"] and u["password"] == request.form["password"]:
                 session["email"] = u["email"]; return redirect("/")
         return "Senha errada! <a href='/login'>Voltar</a>"
-    return CSS + HEADER + """<div class="wrap"><div class="box"><h2>Entrar</h2><form method="post">
+    return PWA_HEAD + CSS + HEADER + """<div class="wrap"><div class="box"><h2>Entrar</h2><form method="post">
     <input name="email" placeholder="Email" required><input name="password" type="password" placeholder="Senha" required>
     <button class="btn">ENTRAR</button></form><br><center><a href="/register">Criar conta</a></center></div></div>"""
 @app.route("/logout")
@@ -163,7 +221,7 @@ def add():
             "photos": photos
         })
         save(d); return redirect("/")
-    return CSS + HEADER + """<div class="wrap"><div class="box"><h2>➕ Adicionar Troca</h2>
+    return PWA_HEAD + CSS + HEADER + """<div class="wrap"><div class="box"><h2>➕ Adicionar Troca</h2>
     <form method="post" enctype="multipart/form-data">
     <label>Título do Produto *</label><input name="title" placeholder="Ex: LCD S26 - Microfone Bluetooth" required>
     <label>Preço (MZN) *</label><input name="price" type="number" placeholder="1500" required>
@@ -186,13 +244,13 @@ def admin():
             session["is_admin"] = True
         else: return "Senha errada!"
     if not session.get("is_admin"):
-        return CSS + """<div class="top" style="background:#111"><h1>🔐 ADMIN</h1><p>Só o dono do site</p></div>
+        return PWA_HEAD + CSS + """<div class="top" style="background:#111"><h1>🔐 ADMIN</h1><p>Só o dono do site</p></div>
         <div class="wrap"><div class="box"><h2>Entra como Admin</h2><form method="post">
         <input name="password" type="password" placeholder="Senha admin"><button class="btn btn-dark">ENTRAR NO PAINEL</button></form></div></div>"""
     d = load()
     users_list = "".join([f"<p>👤 {u['name']} - {u['email']}</p>" for u in d["users"]]) or "<p>Nenhum utilizador ainda</p>"
     trades_list = "".join([f"<p>📦 {t.get('title','')} - {t.get('price','')} MZN - {t.get('owner','')}</p>" for t in d["trades"]]) or "<p>Nenhuma troca ainda</p>"
-    return CSS + """<div class="top" style="background:#111"><h1>📊 PAINEL DO DONO</h1><p>Troca Troca - Estatísticas</p></div>
+    return PWA_HEAD + CSS + """<div class="top" style="background:#111"><h1>📊 PAINEL DO DONO</h1><p>Troca Troca - Estatísticas</p></div>
     <div class="wrap">
       <div class="stat-big"><span>👥 PESSOAS QUE VISITARAM O SITE</span><b>""" + str(d['visits']) + """</b><span>visitas totais</span></div>
       <div class="stat-row">
