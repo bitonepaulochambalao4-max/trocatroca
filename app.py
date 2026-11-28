@@ -1,116 +1,123 @@
 import os, sqlite3
-from flask import Flask, request, redirect, session, g
-from werkzeug.utils import secure_filename
+from flask import Flask, request, redirect, session, render_template_string
 from werkzeug.security import generate_password_hash, check_password_hash
+
 app = Flask(__name__)
-app.secret_key = "trocatroca-123"
-UPLOAD_FOLDER = "static/uploads"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-ADMIN_SENHA = "admin123"
+app.secret_key = "trocatroca-secreto-123"
+ADMIN_PASS = "admin123"
+DB = "trocatroca.db"
+
 def db():
-    if "db" not in g:
-        g.db = sqlite3.connect("troca.db")
-        g.db.row_factory = sqlite3.Row
-    return g.db
-@app.teardown_appcontext
-def close_db(e=None):
-    d = g.pop("db", None)
-    if d: d.close()
-def init_db():
-    con = sqlite3.connect("troca.db")
-    con.execute("CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY AUTOINCREMENT, nome TEXT, email TEXT UNIQUE, senha TEXT)")
-    con.execute("CREATE TABLE IF NOT EXISTS produtos(id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, tenho TEXT, quero TEXT, desc TEXT, preco TEXT, whatsapp TEXT, fotos TEXT, cidade TEXT)")
-    con.commit(); con.close()
-init_db()
-def BASE(html, titulo="Troca Troca Moz"):
-    return f"""<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{titulo}</title><style>*{{box-sizing:border-box}}body{{font-family:Arial,sans-serif;margin:0;background:#f2f2f2}} .header{{background:#00b140;color:#fff;text-align:center;padding:20px 12px}} .header h1{{margin:0;font-size:30px;font-weight:900}} .header p{{margin:8px 0 14px}} .btn-amarelo{{display:inline-block;background:#ffcc00;color:#000;font-weight:900;padding:12px 28px;border-radius:30px;text-decoration:none}} .nav{{background:#fff;display:flex;justify-content:space-around;padding:12px 5px;border-bottom:1px solid #ddd;position:sticky;top:0;z-index:10}} .nav a{{color:#111;text-decoration:none;font-weight:bold;font-size:14px}} .grid{{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px}} .card{{background:#fff;border-radius:12px;overflow:hidden;text-decoration:none;color:#111;display:block}} .card img{{width:100%;height:165px;object-fit:cover;display:block}} .card .p{{padding:10px}} .card .p b{{font-size:14px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}} .card .p small{{color:#666;font-size:12px}} .preco{{color:#e60023;font-weight:bold;margin-top:4px}} .main-img{{width:100%;height:330px;object-fit:cover;border-radius:10px;display:block}} .thumbs{{display:flex;gap:8px;margin-top:10px}} .thumbs img{{width:60px;height:60px;object-fit:cover;border-radius:8px;border:2px solid #eee}} .thumbs img.active{{border-color:#00b140}} .btn{{background:#00b140;color:#fff;border:0;padding:12px;border-radius:8px;display:block;text-decoration:none;text-align:center;width:100%;font-weight:bold}} input,select,textarea{{width:100%;padding:11px;margin:6px 0;border:1px solid #ccc;border-radius:8px}} .wrap{{max-width:1000px;margin:auto}} .box{{background:#fff;padding:14px;border-radius:10px}} .links{{text-align:center;padding:20px}} .links a{{color:#4a00e0}}</style></head><body><div class="header"><h1>🔄 TROCA TROCA MOZ</h1><p>Troca sem dinheiro • Matola - Maputo</p><a class="btn-amarelo" href="/publicar">+ ADICIONAR TROCA</a></div><div class="nav"><a href="/">🏠 Início</a><a href="/publicar">+ Publicar</a><a href="/login">🔑 Entrar</a><a href="/register">✅ Criar Conta</a></div><div class="wrap">{html}</div><div class="links"><a href="/login">Entrar</a> | <a href="/register">Criar Conta</a> | <a href="/admin">Admin</a></div></body></html>"""
+    c = sqlite3.connect(DB)
+    c.row_factory = sqlite3.Row
+    return c
+
+def init():
+    c = db()
+    c.execute("CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY, nome TEXT, email TEXT UNIQUE, senha TEXT)")
+    c.execute("CREATE TABLE IF NOT EXISTS trocas(id INTEGER PRIMARY KEY, titulo TEXT, preco TEXT, desc TEXT, dono TEXT, foto TEXT)")
+    c.execute("CREATE TABLE IF NOT EXISTS visitas(id INTEGER PRIMARY KEY, total INTEGER)")
+    c.execute("INSERT OR IGNORE INTO visitas(id,total) VALUES(1,0)")
+    c.commit(); c.close()
+init()
+
+CSS = """
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}
+body{background:#f0f7f0}
+.top{background:#0a7a2f;color:white;padding:18px 15px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0}
+.top b{font-size:22px}
+.top b span{color:#ffdd00}
+.top a{background:white;color:#0a7a2f;padding:8px 14px;border-radius:20px;text-decoration:none;font-weight:bold;font-size:13px}
+.hero{background:linear-gradient(135deg,#0a7a2f,#12b84a);color:white;text-align:center;padding:28px 15px}
+.hero h1{font-size:26px;margin-bottom:6px}
+.hero p{opacity:.9;font-size:14px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:15px}
+.card{background:white;border-radius:14px;padding:16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.08);border-top:4px solid #0a7a2f}
+.card h2{font-size:28px;color:#0a7a2f}
+.card p{font-size:12px;color:#666;margin-top:4px}
+.section{padding:0 15px 20px}
+.section h3{margin:10px 0}
+.item{background:white;border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.08);display:flex;gap:12px;align-items:center}
+.item img{width:70px;height:70px;border-radius:10px;object-fit:cover;background:#e8f5e9}
+.btn{background:#0a7a2f;color:white;border:none;padding:12px;width:100%;border-radius:10px;font-weight:bold;font-size:15px}
+.btn2{background:#ffdd00;color:#111;padding:10px 18px;border-radius:20px;text-decoration:none;font-weight:bold;display:inline-block;margin-top:10px}
+input{width:100%;padding:13px;margin:8px 0;border:1px solid #ddd;border-radius:10px}
+.footer{text-align:center;padding:20px;color:#888;font-size:12px}
+.footer a{color:#0a7a2f;text-decoration:none;margin:0 8px;font-weight:bold}
+</style>
+"""
+
+def header():
+    u = session.get("nome")
+    btn = f"<span>Olá, {u}</span> <a href='/sair'>Sair</a>" if u else "<a href='/entrar'>Entrar</a> <a href='/criar'>Criar Conta</a>"
+    return f"<div class='top'><b>TROCA<span>TROCA</span> 🇲🇿</b><div>{btn}</div></div>"
+
 @app.route("/")
-def index():
-    con = db()
-    prods = con.execute("SELECT * FROM produtos ORDER BY id DESC").fetchall()
-    cards = ""
-    for p in prods:
-        fotos = (p["fotos"] or "").split(",")
-        foto = fotos[0] if fotos and fotos[0] else ""
-        img = f"/static/uploads/{foto}" if foto else "https://via.placeholder.com/300"
-        cards += f'<a class="card" href="/produto/{p["id"]}"><img src="{img}"><div class="p"><b>{p["tenho"]}</b><small>Troco por: {p["quero"]}</small><div class="preco">{p["preco"] or ""} MT</div><small>{p["cidade"] or "Matola"}</small></div></a>'
-    if not cards:
-        cards = "<div style='padding:20px'><h2>Últimas Trocas</h2><p>Ainda não há trocas. Seja o primeiro!</p></div>"
-    else:
-        cards = f"<h2 style='padding:5px 10px'>Últimas Trocas</h2><div class='grid'>{cards}</div>"
-    return BASE(cards)
-@app.route("/produto/<int:pid>")
-def produto(pid):
-    con = db()
-    p = con.execute("SELECT * FROM produtos WHERE id=?", (pid,)).fetchone()
-    if not p: return redirect("/")
-    fotos = [f for f in (p["fotos"] or "").split(",") if f]
-    if not fotos: fotos = [""]
-    main = f"/static/uploads/{fotos[0]}" if fotos[0] else "https://via.placeholder.com/400"
-    thumbs = "".join([f'<img src="/static/uploads/{f}" onclick="trocar(this, \'/static/uploads/{f}\')" class="{"active" if i==0 else ""}">' for i,f in enumerate(fotos)])
-    html = f"""<div class="box"><img id="mainImg" class="main-img" src="{main}"><div class="thumbs">{thumbs}</div><h2>{p["tenho"]}</h2><p><b>Quero:</b> {p["quero"]}</p><p>{p["desc"]}</p><h3 style="color:#e60023">{p["preco"] or ""} MT</h3><p>Local: {p["cidade"]}</p><a class="btn" href="https://wa.me/{p["whatsapp"]}">Falar no WhatsApp</a></div><script>function trocar(el,src){{document.getElementById('mainImg').src=src;document.querySelectorAll('.thumbs img').forEach(i=>i.classList.remove('active'));el.classList.add('active')}}</script>"""
-    return BASE(html, p["tenho"])
-@app.route("/publicar", methods=["GET","POST"])
-def publicar():
-    if "user_id" not in session: return redirect("/login")
-    if request.method == "POST":
-        fotos = []
-        for f in request.files.getlist("fotos"):
-            if f and f.filename:
-                nome = secure_filename(f.filename)
-                f.save(os.path.join(app.config["UPLOAD_FOLDER"], nome))
-                fotos.append(nome)
-        con = db()
-        con.execute("INSERT INTO produtos(user_id,tenho,quero,desc,preco,whatsapp,fotos,cidade) VALUES(?,?,?,?,?,?,?,?)", (session["user_id"], request.form.get("tenho"), request.form.get("quero"), request.form.get("desc"), request.form.get("preco"), request.form.get("whatsapp"), ",".join(fotos), request.form.get("cidade")))
-        con.commit()
-        return redirect("/")
-    html = """<h2>Publicar Troca</h2><div class="box"><form method="post" enctype="multipart/form-data"><input name="tenho" placeholder="O que tens?" required><input name="quero" placeholder="O que queres?" required><textarea name="desc" placeholder="Descreva..."></textarea><input name="preco" placeholder="Valor MT"><input name="whatsapp" placeholder="WhatsApp 258..."><input name="cidade" placeholder="Cidade"><label>Até 4 fotos:</label><input type="file" name="fotos" multiple accept="image/*"><button class="btn">Publicar</button></form></div>"""
-    return BASE(html)
-@app.route("/register", methods=["GET","POST"])
-def register():
-    if request.method == "POST":
+def home():
+    c = db()
+    c.execute("UPDATE visitas SET total=total+1 WHERE id=1"); c.commit()
+    total_visitas = c.execute("SELECT total FROM visitas WHERE id=1").fetchone()[0]
+    n_users = c.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+    trocas = c.execute("SELECT * FROM trocas ORDER BY id DESC").fetchall()
+    n_trocas = len(trocas)
+    c.close()
+    items = ""
+    for t in trocas:
+        items += f"<div class='item'><img src='{t['foto'] or 'https://via.placeholder.com/70'}'><div style='flex:1'><b>{t['titulo']}</b><br><small>{t['desc']}</small><br><b style='color:#0a7a2f'>{t['preco']} MZN</b> • {t['dono']}</div></div>"
+    if not items:
+        items = "<div style='background:white;padding:20px;border-radius:14px;text-align:center'>Ainda não há trocas.<br>Seja o primeiro a publicar! 👇</div>"
+    return render_template_string(CSS + header() + f"""
+    <div class='hero'><h1>Troca, Vende & Compra em Moçambique</h1><p>Sem dinheiro? Troca por outra coisa!</p><a class='btn2' href='/adicionar'>+ ADICIONAR TROCA</a></div>
+    <div class='stats'>
+      <div class='card'><h2>👥 {total_visitas}</h2><p>Pessoas que visitaram o site</p></div>
+      <div class='card'><h2>🔄 {n_trocas}</h2><p>Trocas Ativas</p></div>
+      <div class='card'><h2>👤 {n_users}</h2><p>Utilizadores Registados</p></div>
+      <div class='card'><h2>✅ {n_trocas}</h2><p>Trocas Publicadas</p></div>
+    </div>
+    <div class='section'><h3>🔥 Últimas Trocas</h3>{items}</div>
+    <div class='footer'><a href='/entrar'>Entrar</a> | <a href='/criar'>Criar Conta</a> | <a href='/admin'>Admin</a><br><br>TrocaTroca Moz © 2026</div>
+    """)
+
+@app.route("/criar", methods=["GET","POST"])
+def criar():
+    if request.method=="POST":
+        c=db()
         try:
-            con = db()
-            con.execute("INSERT INTO users(nome,email,senha) VALUES(?,?,?)", (request.form.get("nome"), request.form.get("email"), generate_password_hash(request.form.get("senha"))))
-            con.commit()
-        except: return BASE("<p>Email já existe</p>")
-        return redirect("/login")
-    return BASE("""<h2>Criar Conta</h2><div class="box"><form method="post"><input name="nome" placeholder="Teu Nome" required><input name="email" placeholder="Email" required><input type="password" name="senha" placeholder="Senha" required><button class="btn">Criar Conta</button></form></div>""")
-@app.route("/login", methods=["GET","POST"])
-def login():
-    if request.method == "POST":
-        con = db()
-        u = con.execute("SELECT * FROM users WHERE email=?", (request.form.get("email"),)).fetchone()
-        if u and check_password_hash(u["senha"], request.form.get("senha")):
-            session["user_id"] = u["id"]; session["nome"] = u["nome"]
-            return redirect("/")
-        return BASE("Senha errada")
-    return BASE("""<h2>Entrar</h2><div class="box"><form method="post"><input name="email" placeholder="Email" required><input type="password" name="senha" placeholder="Senha" required><button class="btn">Entrar</button></form></div>""")
-@app.route("/logout")
-def logout():
+            c.execute("INSERT INTO users(nome,email,senha) VALUES(?,?,?)",(request.form["nome"],request.form["email"],generate_password_hash(request.form["senha"])));c.commit();c.close()
+            session["nome"]=request.form["nome"]; return redirect("/")
+        except: return "Email já existe. <a href='/criar'>Voltar</a>"
+    return render_template_string(CSS+header()+"<div style='padding:20px'><h2>Criar Conta</h2><form method='post'><input name='nome' placeholder='Teu nome' required><input name='email' placeholder='Email' required><input name='senha' type='password' placeholder='Senha' required><button class='btn'>CRIAR CONTA</button></form></div>")
+
+@app.route("/entrar", methods=["GET","POST"])
+def entrar():
+    if request.method=="POST":
+        c=db(); u=c.execute("SELECT * FROM users WHERE email=?",(request.form["email"],)).fetchone();c.close()
+        if u and check_password_hash(u["senha"],request.form["senha"]):
+            session["nome"]=u["nome"]; return redirect("/")
+        return "Senha errada. <a href='/entrar'>Voltar</a>"
+    return render_template_string(CSS+header()+"<div style='padding:20px'><h2>Entrar</h2><form method='post'><input name='email' placeholder='Email' required><input name='senha' type='password' placeholder='Senha' required><button class='btn'>ENTRAR</button></form></div>")
+
+@app.route("/sair")
+def sair():
     session.clear(); return redirect("/")
+
+@app.route("/adicionar", methods=["GET","POST"])
+def adicionar():
+    if "nome" not in session: return redirect("/entrar")
+    if request.method=="POST":
+        c=db(); c.execute("INSERT INTO trocas(titulo,preco,desc,dono,foto) VALUES(?,?,?,?,?)",(request.form["titulo"],request.form["preco"],request.form["desc"],session["nome"],request.form.get("foto","")));c.commit();c.close(); return redirect("/")
+    return render_template_string(CSS+header()+"<div style='padding:20px'><h2>+ Adicionar Troca</h2><form method='post'><input name='titulo' placeholder='Ex: iPhone 11' required><input name='preco' placeholder='Preço em MZN' required><input name='desc' placeholder='O que queres em troca? Ex: Troco por Samsung'><input name='foto' placeholder='Link da foto (opcional)'><button class='btn'>PUBLICAR</button></form></div>")
+
 @app.route("/admin", methods=["GET","POST"])
 def admin():
-    if request.method == "POST":
-        if request.form.get("senha") == ADMIN_SENHA: session["admin"] = True; return redirect("/admin")
-        return BASE("Senha errada")
+    if request.method=="POST" and request.form.get("senha")==ADMIN_PASS:
+        session["admin"]=True
     if not session.get("admin"):
-        return BASE("<h2>Admin</h2><div class='box'><form method='post'><input type='password' name='senha' placeholder='Senha'><button class='btn'>Entrar</button></form></div>")
-    con = db()
-    users = con.execute("SELECT * FROM users").fetchall()
-    prods = con.execute("SELECT * FROM produtos").fetchall()
-    h = "<h2>Admin</h2>"
-    for u in users: h += f"<p>{u['nome']} - {u['email']} <a href='/admin/del_user/{u['id']}'>Apagar</a></p>"
-    for p in prods: h += f"<p>{p['tenho']} <a href='/admin/del_prod/{p['id']}'>Apagar</a></p>"
-    return BASE(h)
-@app.route("/admin/del_user/<int:uid>")
-def del_user(uid):
-    if not session.get("admin"): return redirect("/admin")
-    con = db(); con.execute("DELETE FROM users WHERE id=?", (uid,)); con.commit(); return redirect("/admin")
-@app.route("/admin/del_prod/<int:pid>")
-def del_prod(pid):
-    if not session.get("admin"): return redirect("/admin")
-    con = db(); con.execute("DELETE FROM produtos WHERE id=?", (pid,)); con.commit(); return redirect("/admin")
-if __name__ == "__main__":
-    app.run(debug=True)
+        return render_template_string(CSS+"<div style='padding:20px'><h2>🔐 Admin</h2><form method='post'><input name='senha' type='password' placeholder='Senha Admin' required><button class='btn'>ENTRAR</button></form><p>Senha: admin123</p></div>")
+    c=db(); n_users=c.execute("SELECT COUNT(*) FROM users").fetchone()[0]; n_trocas=c.execute("SELECT COUNT(*) FROM trocas").fetchone()[0]; visitas=c.execute("SELECT total FROM visitas WHERE id=1").fetchone()[0]; users=c.execute("SELECT * FROM users").fetchall(); c.close()
+    lista="".join([f"<div class='item'><div><b>{u['nome']}</b><br><small>{u['email']}</small></div></div>" for u in users])
+    return render_template_string(CSS+header()+f"<div class='hero'><h1>Painel Admin</h1></div><div class='stats'><div class='card'><h2>{visitas}</h2><p>Visitas Totais</p></div><div class='card'><h2>{n_users}</h2><p>Utilizadores</p></div><div class='card'><h2>{n_trocas}</h2><p>Trocas</p></div><div class='card'><h2>🟢 Online</h2><p>Site Ativo</p></div></div><div class='section'><h3>Utilizadores</h3>{lista}</div>")
+
+if __name__=="__main__":
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT",10000)))
