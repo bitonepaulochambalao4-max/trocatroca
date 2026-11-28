@@ -42,7 +42,7 @@ label{font-weight:bold;font-size:14px}
 .btn-whats{background:#25D366}
 .btn-dark{background:#111}
 .trade{background:white;width:100%;border-bottom:8px solid #f0f2f5}
-.trade img.main{width:100%;height:320px;object-fit:cover;background:#eee}
+.trade img.main{width:100%;height:auto;object-fit:contain;background:white;display:block}
 .thumbs{display:flex;gap:6px;padding:8px}
 .thumbs img{width:72px;height:72px;border-radius:8px;object-fit:cover;cursor:pointer;border:2px solid #eee}
 .badge{background:#e8f5e9;color:#00a651;padding:5px 10px;border-radius:20px;font-size:12px;font-weight:bold}
